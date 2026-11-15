@@ -1,0 +1,64 @@
+/* 주문완료 화면 전용 스타일 (OrderCompletePage.jsx 가 직접 import) */
+.complete-page {
+  max-width: 520px;
+  margin: 24px auto;
+  padding: 28px 24px;
+  background: #fff;
+  border: 1px solid #dde3e8;
+  border-radius: 12px;
+}
+
+.complete-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+}
+
+.complete-sub {
+  margin: 0 0 20px;
+  color: #6b7780;
+}
+
+.complete-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid #eef1f3;
+}
+
+.complete-list li,
+.complete-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef1f3;
+}
+
+.complete-total strong {
+  color: #1b5e84;
+  font-size: 20px;
+}
+
+.complete-home {
+  display: block;
+  margin-top: 20px;
+  padding: 14px;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  background: #1b5e84;
+  border-radius: 8px;
+}
+
+.complete-home:hover {
+  background: #164d6c;
+}
+
+.complete-sub-link {
+  display: block;
+  margin-top: 16px;
+  color: #1b5e84;
+  font-weight: 700;
+  text-align: center;
+}

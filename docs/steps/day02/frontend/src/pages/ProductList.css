@@ -1,0 +1,16 @@
+/* 상품 목록 화면 전용 스타일 (ProductList.jsx 가 직접 import) */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));   /* 화면 너비에 맞춰 칸 수가 바뀐다 */
+  gap: 16px;
+}
+
+.message {
+  text-align: center;
+  color: #666;
+  margin: 40px 0;
+}
+
+.message.error {
+  color: #d32f2f;
+}

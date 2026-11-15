@@ -1,0 +1,174 @@
+/* 구매내역 화면 전용 스타일 (PurchasesPage.jsx 가 직접 import) */
+.purchases-page {
+  max-width: 720px;
+  margin: 8px auto 32px;
+}
+
+.purchases-title {
+  margin: 4px 0 4px;
+  font-size: 28px;
+}
+
+.purchases-sub {
+  margin: 0 0 16px;
+  color: #6b7780;
+  font-size: 14px;
+}
+
+.purchases-periods {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.period-btn {
+  padding: 8px 16px;
+  color: #333;
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid #c9d1d7;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.period-btn.on {
+  color: #1b5e84;
+  font-weight: 800;
+  background: #e8f1f6;
+  border-color: #1b5e84;
+}
+
+.purchase-list,
+.purchase-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.purchase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.purchase-item {
+  background: #fff;
+  border: 1px solid #dde3e8;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.purchase-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 18px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.purchase-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.purchase-info span {
+  color: #6b7780;
+  font-size: 13px;
+}
+
+.purchase-price {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.purchase-arrow {
+  color: #9aa5ad;
+  font-size: 12px;
+  transition: transform 0.15s;
+}
+
+.purchase-arrow.open {
+  transform: rotate(180deg);
+}
+
+.purchase-detail {
+  padding: 4px 18px 16px;
+  border-top: 1px solid #eef1f3;
+}
+
+.purchase-lines li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f4f6;
+}
+
+.purchase-lines li a {
+  flex: 1;
+  color: #1a1a1a;
+  text-decoration: none;
+}
+
+.purchase-lines li a:hover {
+  text-decoration: underline;
+}
+
+.purchase-lines li span {
+  color: #6b7780;
+  font-size: 14px;
+}
+
+.purchase-ship {
+  margin: 12px 0 0;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.purchase-ship b {
+  margin-right: 6px;
+}
+
+.purchase-loading,
+.purchase-error,
+.purchase-empty {
+  padding: 32px 0;
+  color: #6b7780;
+  text-align: center;
+}
+
+.purchase-error {
+  color: #c0392b;
+}
+
+.purchase-empty a {
+  color: #1b5e84;
+  font-weight: 700;
+}
+
+.purchase-more {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  color: #1b5e84;
+  font-size: 15px;
+  font-weight: 800;
+  background: #e8f1f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.purchase-more:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

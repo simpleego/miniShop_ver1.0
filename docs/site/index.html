@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>miniShop 실습 지도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 한 장짜리 학습 지도. 위쪽 고정 내비게이션 + 섹션 6개(로드맵, ER, 요청 흐름, 동시성, 토큰, API). 선택하면 오른쪽(좁으면 아래) 패널에 설명이 나온다. */
+:root {
+  --bg: #f2f5f7;
+  --surface: #ffffff;
+  --surface-2: #e8eef1;
+  --ink: #14232d;
+  --muted: #53666f;
+  --line: #d3dde2;
+  --accent: #0a7c96;
+  --accent-soft: #d9eef3;
+  --new: #b86e00;
+  --new-soft: #fbecd2;
+  --ok: #1f7a45;
+  --ok-soft: #dcf1e4;
+  --warn: #a56400;
+  --warn-soft: #fbecd2;
+  --err: #b3261e;
+  --err-soft: #f9dedc;
+  --font-body: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1a20; --surface: #16252d; --surface-2: #1d313b; --ink: #e5eef2; --muted: #98adb7; --line: #2c424d;
+    --accent: #4cc3dd; --accent-soft: #123743; --new: #f0b252; --new-soft: #3a2c10; --ok: #62d08e; --ok-soft: #123524;
+    --warn: #f0b252; --warn-soft: #3a2c10; --err: #ff8a80; --err-soft: #3d1c1a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1a20; --surface: #16252d; --surface-2: #1d313b; --ink: #e5eef2; --muted: #98adb7; --line: #2c424d;
+  --accent: #4cc3dd; --accent-soft: #123743; --new: #f0b252; --new-soft: #3a2c10; --ok: #62d08e; --ok-soft: #123524;
+  --warn: #f0b252; --warn-soft: #3a2c10; --err: #ff8a80; --err-soft: #3d1c1a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.65; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); }
+h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.3; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gut { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1120px; margin: 0 auto; }
+
+/* 내비게이션 */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-block: 10px; }
+.nav b { font-family: var(--font-mono); font-size: 0.82rem; white-space: nowrap; margin-right: 10px; }
+.nav a { color: var(--muted); text-decoration: none; font-size: 0.88rem; padding: 4px 11px; border-radius: 6px; white-space: nowrap; }
+.nav a:hover { background: var(--surface-2); color: var(--ink); }
+
+/* 머리말 */
+.intro { padding-block: 44px 8px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.intro h1 { font-size: clamp(1.7rem, 3.6vw, 2.5rem); font-weight: 700; max-width: 22ch; }
+.intro p { color: var(--muted); max-width: 64ch; margin-top: 14px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 22px 0 0; padding: 0; list-style: none; }
+.stats li { font-size: 0.9rem; color: var(--muted); }
+.stats b { display: block; font-size: 1.5rem; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.2; }
+
+section { padding-block: 44px 8px; }
+.sec-head { margin-bottom: 18px; max-width: 70ch; }
+.sec-head h2 { font-size: 1.4rem; font-weight: 700; }
+.sec-head p { color: var(--muted); margin-top: 6px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.pad { padding: 18px; }
+
+.seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--surface-2); border-radius: 8px; }
+.seg button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; font-size: 0.86rem; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.btn { border: 1px solid var(--accent); background: var(--accent); color: var(--surface); padding: 7px 16px; border-radius: 7px; font-weight: 700; font-size: 0.9rem; }
+.btn.ghost { background: none; color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.chip { display: inline-block; font-family: var(--font-mono); font-size: 0.74rem; padding: 1px 8px; border-radius: 4px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.chip.new { background: var(--new-soft); color: var(--new); font-weight: 600; }
+.chip.acc { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+/* 1. 로드맵 */
+.days { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
+.day { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 4px 9px; text-align: center; min-width: 0; }
+.day small { display: block; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+.day strong { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.day span { display: block; font-size: 0.7rem; color: var(--muted); line-height: 1.3; margin-top: 2px; overflow-wrap: anywhere; }
+.day.mvp { border-bottom: 3px solid var(--ok); }
+.day.ext { border-bottom: 3px solid var(--accent); }
+.day[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
+.day[aria-pressed="true"] small, .day[aria-pressed="true"] strong, .day[aria-pressed="true"] span { color: var(--bg); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; }
+.legend i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.day-detail { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 22px; }
+.day-detail h3 { font-size: 1.2rem; }
+.day-detail .goal { color: var(--muted); margin-top: 4px; }
+.kv { margin: 14px 0 0; display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 8px 12px; font-size: 0.9rem; }
+.kv dt { color: var(--muted); font-size: 0.8rem; padding-top: 2px; }
+.kv dd { margin: 0; display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; }
+.mini-table h4 { margin: 0 0 8px; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.growth { display: flex; flex-direction: column; gap: 6px; }
+.growth .row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 0.82rem; }
+.growth .bar { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.growth .bar i { display: block; height: 100%; background: var(--accent); }
+
+/* 2. ER */
+.er-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-bottom: 12px; }
+.er-tools label { font-size: 0.86rem; color: var(--muted); }
+.er-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.er-scroll { overflow-x: auto; padding: 6px; }
+svg.er { display: block; min-width: 700px; width: 100%; height: auto; font-family: var(--font-body); }
+.er .tbl { cursor: pointer; transition: opacity .2s; }
+.er .tbl.off { opacity: 0.16; }
+.er .t-box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.er .t-head { fill: var(--accent); }
+.er .tbl.sel .t-box { stroke: var(--ink); stroke-width: 2.5; }
+.er .t-name { fill: var(--surface); font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+.er .t-day { fill: var(--surface); font-family: var(--font-mono); font-size: 10px; opacity: .85; }
+.er .c-name { fill: var(--ink); font-family: var(--font-mono); font-size: 11px; }
+.er .c-type { fill: var(--muted); font-family: var(--font-mono); font-size: 9.5px; }
+.er .c-key { fill: var(--accent); font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; }
+.er .c-new rect { fill: var(--new-soft); }
+.er .c-new .c-name { fill: var(--new); font-weight: 600; }
+.er .rel { stroke: var(--muted); stroke-width: 1.4; fill: none; transition: opacity .2s; }
+.er .rel.off { opacity: 0.12; }
+.er .rel.hl { stroke: var(--accent); stroke-width: 2.4; }
+.er .card { fill: var(--muted); font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+.er-detail { padding: 16px; font-size: 0.9rem; }
+.er-detail h3 { font-family: var(--font-mono); font-size: 1.05rem; }
+.er-detail .use { color: var(--muted); margin: 6px 0 12px; }
+.er-detail table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.er-detail td { padding: 5px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.er-detail td:first-child { font-family: var(--font-mono); font-size: 0.78rem; padding-right: 10px; width: 40%; overflow-wrap: anywhere; }
+.er-detail td:last-child { color: var(--muted); }
+.er-detail .rels { margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 0.84rem; }
+.er-note { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--new-soft); color: var(--ink); font-size: 0.84rem; }
+
+/* 3. 요청 흐름 */
+.flow-top { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+.flow-box { padding: 10px; overflow-x: auto; }
+svg.flow { display: block; min-width: 680px; width: 100%; height: auto; font-family: var(--font-body); }
+.flow .node rect { fill: var(--surface-2); stroke: var(--line); stroke-width: 1.5; transition: all .25s; }
+.flow .node.on rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.5; }
+.flow .node text { fill: var(--ink); font-size: 13px; font-weight: 700; text-anchor: middle; }
+.flow .node .sub { font-weight: 400; font-size: 10.5px; fill: var(--muted); font-family: var(--font-mono); }
+.flow .arrow { stroke: var(--accent); stroke-width: 2.4; fill: none; }
+.flow .arrow.old { stroke: var(--muted); opacity: 0.35; stroke-width: 1.5; }
+.flow .arrow.ret { stroke-dasharray: 6 4; }
+.flow .tip { fill: var(--accent); }
+.flow .tip.old { fill: var(--muted); opacity: 0.35; }
+.flow .lbl { fill: var(--ink); font-size: 11px; font-family: var(--font-mono); text-anchor: middle; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+.step-card { margin-top: 12px; padding: 14px 16px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: start; }
+.step-no { font-family: var(--font-mono); font-weight: 600; font-size: 1.4rem; color: var(--accent); grid-row: span 3; font-variant-numeric: tabular-nums; }
+.step-card .who { font-size: 0.8rem; color: var(--muted); }
+.step-card pre { margin: 6px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 7px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.step-nav { display: flex; gap: 8px; margin-top: 10px; }
+
+/* 4. 동시성 */
+.race-ctl { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 14px; }
+.race-ctl .grp { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--muted); }
+.race-ctl input[type="range"] { width: 120px; }
+.race-ctl .ck { display: flex; align-items: center; gap: 6px; color: var(--ink); }
+.race-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; align-items: start; }
+.dots { display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 6px; min-height: 110px; align-content: start; }
+.dot { aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.66rem; background: var(--surface-2); color: var(--muted); border: 2px solid transparent; transition: background .2s, border-color .2s; font-variant-numeric: tabular-nums; }
+.dot.ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+.dot.no { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.dot.err { background: var(--err-soft); color: var(--err); border-color: var(--err); }
+.dot.over { background: var(--err); color: var(--surface); border-color: var(--err); }
+.stock-big { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.stock-big b { font-family: var(--font-mono); font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.stock-big.neg b { color: var(--err); }
+.res { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 0.9rem; }
+.res dt { color: var(--muted); }
+.res dd { margin: 0; font-family: var(--font-mono); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.verdict { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.86rem; }
+.verdict.good { background: var(--ok-soft); }
+.verdict.bad { background: var(--err-soft); }
+.verdict.mid { background: var(--warn-soft); }
+.code-cmp { margin: 0; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.55; overflow-x: auto; white-space: pre; }
+.code-cmp .hl { background: var(--new-soft); color: var(--new); font-weight: 600; }
+
+/* 5. 토큰 */
+.jwt-parts { display: flex; flex-wrap: wrap; gap: 0 2px; font-family: var(--font-mono); font-size: 0.82rem; overflow-wrap: anywhere; line-height: 1.7; }
+.jwt-parts .p1 { color: #d1495b; } .jwt-parts .p2 { color: #8a5cd0; } .jwt-parts .p3 { color: var(--accent); }
+.jwt-parts .dotc { color: var(--muted); }
+.jwt-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.jwt-box { padding: 12px; border-radius: 8px; background: var(--surface-2); min-width: 0; }
+.jwt-box h4 { margin: 0 0 6px; font-size: 0.78rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.jwt-box pre { margin: 0; font-family: var(--font-mono); font-size: 0.78rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.jwt-act { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.jwt-out { margin-top: 12px; padding: 12px 14px; border-radius: 8px; font-size: 0.9rem; }
+.jwt-out.good { background: var(--ok-soft); } .jwt-out.bad { background: var(--err-soft); }
+
+/* 6. API */
+.api-tools { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 12px; }
+.tbl-wrap { overflow-x: auto; }
+table.api { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 620px; }
+table.api th { text-align: left; font-size: 0.72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.api td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.api tr.later { opacity: 0.32; }
+.m { font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600; padding: 1px 7px; border-radius: 4px; }
+.m.GET { background: var(--ok-soft); color: var(--ok); } .m.POST { background: var(--accent-soft); color: var(--accent); }
+.m.PUT { background: var(--warn-soft); color: var(--warn); } .m.DELETE { background: var(--err-soft); color: var(--err); }
+.codes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 16px; }
+.code-card { padding: 12px 14px; }
+.code-card b { font-family: var(--font-mono); font-size: 1.3rem; }
+.code-card p { font-size: 0.84rem; color: var(--muted); margin-top: 2px; }
+.code-card.c2 b { color: var(--ok); } .code-card.c4 b { color: var(--warn); } .code-card.c5 b { color: var(--err); }
+
+footer { padding-block: 40px 56px; color: var(--muted); font-size: 0.84rem; }
+
+@media (max-width: 980px) {
+  .er-layout, .race-grid, .day-detail { grid-template-columns: minmax(0, 1fr); }
+  .jwt-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .days { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+  .kv dt { padding-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<nav class="nav gut" aria-label="섹션">
+  <div class="wrap">
+    <b>miniShop</b>
+    <a href="#roadmap">로드맵</a><a href="#erd">ER 다이어그램</a><a href="#flow">요청 흐름</a><a href="#race">동시 주문</a><a href="#jwt">로그인 토큰</a><a href="#api">API 지도</a>
+  </div>
+</nav>
+
+<main class="gut">
+<div class="wrap">
+
+  <header class="intro">
+    <p class="eyebrow">10일 실습 · FastAPI + MariaDB + React</p>
+    <h1>열흘 동안 쇼핑몰을 처음부터 만든다</h1>
+    <p>일차를 고르면 그날 만드는 것과 DB 가 어떻게 자라는지, 표를 누르면 컬럼의 용도가, 단계 버튼을 누르면 요청이 어디를 지나가는지 보입니다. 재고가 깨지는 순간과 토큰이 위조되는 순간도 직접 일으켜 볼 수 있습니다.</p>
+    <ul class="stats">
+      <li><b>10</b>실습 일수</li><li><b>8</b>테이블</li><li><b>5</b>MVP 완성 일차</li><li><b>35</b>기초 상품</li><li><b>8</b>설치하는 패키지</li>
+    </ul>
+  </header>
+
+  <!-- 1 로드맵 -->
+  <section id="roadmap">
+    <div class="sec-head">
+      <h2>10일 로드맵</h2>
+      <p>1~5일차는 MVP(상품을 보고, 담고, 구매하면 재고가 줄어든다), 6~10일차는 기능을 하나씩 얹습니다. 패키지와 테이블도 필요해지는 날에 추가합니다.</p>
+    </div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>MVP (1~5일)</span><span><i style="background:var(--accent)"></i>확장 (6~10일)</span></div>
+    <div class="days" id="days" role="group" aria-label="일차 선택"></div>
+    <div class="panel pad day-detail" id="day-detail"></div>
+  </section>
+
+  <!-- 2 ER -->
+  <section id="erd">
+    <div class="sec-head">
+      <h2>ER 다이어그램</h2>
+      <p>일차를 바꾸면 그날까지 만들어진 표만 진하게 보입니다. 7일차에 <code>orders</code> 가 어떻게 바뀌는지 비교해 보세요. 표를 누르면 컬럼의 용도가 나옵니다.</p>
+    </div>
+    <div class="er-tools">
+      <span style="font-size:.86rem;color:var(--muted)">DB 상태</span>
+      <div class="seg" id="er-days" role="group" aria-label="일차별 DB 상태"></div>
+    </div>
+    <div class="er-layout">
+      <div class="panel er-scroll"><svg class="er" id="er" viewBox="0 0 920 770" role="img" aria-label="테이블 8개와 관계"></svg></div>
+      <aside class="panel er-detail" id="er-detail" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <!-- 3 흐름 -->
+  <section id="flow">
+    <div class="sec-head">
+      <h2>요청 하나가 지나가는 길</h2>
+      <p>시나리오를 고르고 <b>다음</b> 을 누르면 요청이 브라우저에서 DB 까지 갔다가 돌아옵니다. 코드는 실제 프로젝트의 것입니다.</p>
+    </div>
+    <div class="flow-top">
+      <div class="seg" id="flow-tabs" role="group" aria-label="시나리오"></div>
+    </div>
+    <div class="panel flow-box"><svg class="flow" id="flow-svg" viewBox="0 0 920 230" role="img" aria-label="브라우저, 프록시, 서버, DB"></svg></div>
+    <div class="panel step-card" id="step-card" aria-live="polite"></div>
+    <div class="step-nav">
+      <button class="btn ghost" type="button" id="step-prev">이전</button>
+      <button class="btn" type="button" id="step-next">다음</button>
+    </div>
+  </section>
+
+  <!-- 4 동시성 -->
+  <section id="race">
+    <div class="sec-head">
+      <h2>동시 주문 실험</h2>
+      <p>5일차의 <code>race_test.py</code> 를 눈으로 봅니다. 재고 10개를 20명이 동시에 주문하면 어떻게 될까요? 코드와 DB 안전망을 바꿔 가며 실행해 보세요.</p>
+    </div>
+    <div class="race-ctl">
+      <div class="seg" id="race-mode" role="group" aria-label="코드 방식">
+        <button type="button" data-mode="naive" aria-pressed="true">확인한 뒤 차감 (4일차)</button>
+        <button type="button" data-mode="safe" aria-pressed="false">조건부 UPDATE + 잠금 (5일차)</button>
+      </div>
+      <label class="grp ck" for="race-check"><input type="checkbox" id="race-check" checked> DB 안전망 <code>CHECK (stock &gt;= 0)</code></label>
+      <label class="grp" for="race-stock">재고 <input type="range" id="race-stock" min="3" max="20" value="10"><b class="mono" id="race-stock-v">10</b></label>
+      <label class="grp" for="race-users">주문자 <input type="range" id="race-users" min="5" max="40" value="20"><b class="mono" id="race-users-v">20</b></label>
+      <button class="btn" type="button" id="race-run">실행</button>
+    </div>
+    <div class="race-grid">
+      <div class="panel pad">
+        <div class="stock-big" id="stock-big"><b id="stock-now">10</b><span class="chip">남은 재고</span></div>
+        <div class="dots" id="dots" aria-label="주문자별 결과"></div>
+        <div class="legend" style="margin: 12px 0 0">
+          <span><span class="dot ok" style="display:inline-grid;width:16px;vertical-align:middle"></span> 성공 201</span>
+          <span><span class="dot no" style="display:inline-grid;width:16px;vertical-align:middle"></span> 재고 부족 409</span>
+          <span><span class="dot err" style="display:inline-grid;width:16px;vertical-align:middle"></span> 서버 오류 500</span>
+          <span><span class="dot over" style="display:inline-grid;width:16px;vertical-align:middle"></span> 초과 판매</span>
+        </div>
+      </div>
+      <div class="panel pad">
+        <dl class="res" id="race-res"></dl>
+        <div class="verdict mid" id="race-verdict">실행을 누르면 결과가 나옵니다.</div>
+      </div>
+    </div>
+    <div class="panel pad" style="margin-top: 16px">
+      <pre class="code-cmp" id="race-code"></pre>
+    </div>
+  </section>
+
+  <!-- 5 토큰 -->
+  <section id="jwt">
+    <div class="sec-head">
+      <h2>로그인 토큰(JWT) 해부</h2>
+      <p>토큰은 점(.)으로 나뉜 세 조각입니다. 내용은 누구나 읽을 수 있지만, 한 글자라도 바꾸면 서명이 맞지 않아 서버가 거부합니다. 이 화면의 비밀키 <code>demo-secret</code> 은 연습용입니다.</p>
+    </div>
+    <div class="panel pad">
+      <div class="jwt-parts" id="jwt-parts" aria-label="토큰"></div>
+      <div class="jwt-grid">
+        <div class="jwt-box"><h4>헤더 (알고리즘)</h4><pre id="jwt-h"></pre></div>
+        <div class="jwt-box"><h4>내용 (누가, 권한, 만료)</h4><pre id="jwt-p"></pre></div>
+        <div class="jwt-box"><h4>서명 (위조 방지)</h4><pre id="jwt-s"></pre></div>
+      </div>
+      <div class="jwt-act">
+        <button class="btn" type="button" id="jwt-forge">내용을 role=ADMIN 으로 바꿔 보내기</button>
+        <button class="btn ghost" type="button" id="jwt-resign">비밀키로 다시 서명 (서버만 가능)</button>
+        <button class="btn ghost" type="button" id="jwt-reset">처음 토큰으로</button>
+      </div>
+      <div class="jwt-out good" id="jwt-out" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- 6 API -->
+  <section id="api">
+    <div class="sec-head">
+      <h2>API 지도</h2>
+      <p>일차를 고르면 그날까지 만들어진 API 만 진하게 보입니다. 서버를 켜고 <code>/docs</code> 에 들어가면 같은 목록이 자동으로 만들어져 있습니다.</p>
+    </div>
+    <div class="api-tools">
+      <span style="font-size:.86rem;color:var(--muted)">기준</span>
+      <div class="seg" id="api-days" role="group" aria-label="일차"></div>
+    </div>
+    <div class="panel tbl-wrap">
+      <table class="api"><thead><tr><th>메서드</th><th>주소</th><th>설명</th><th>권한</th><th>일차</th></tr></thead><tbody id="api-body"></tbody></table>
+    </div>
+    <div class="codes">
+      <div class="panel code-card c2"><b>200 / 201</b><p>성공 · 새로 만들었다 (주문 완료)</p></div>
+      <div class="panel code-card c4"><b>401</b><p>로그인 안 함 · 토큰 없음/위조/만료</p></div>
+      <div class="panel code-card c4"><b>403</b><p>로그인은 했지만 권한 없음 (일반 회원이 관리자 API)</p></div>
+      <div class="panel code-card c4"><b>404</b><p>없는 상품 · 판매중지 상품 · 남의 주문</p></div>
+      <div class="panel code-card c4"><b>409</b><p>상태 충돌 · 재고 부족 · 이미 환불</p></div>
+      <div class="panel code-card c4"><b>422</b><p>요청 모양이 틀림 · 수량 0 · 없는 정렬값</p></div>
+      <div class="panel code-card c5"><b>500</b><p>서버 쪽 고장 · 예상 못 한 오류</p></div>
+    </div>
+  </section>
+
+  <footer>기준 코드 : miniShop_ver1.0 · DB test_vmshop · 문서 : docs/ · 일차별 코드 : docs/steps/</footer>
+</div>
+</main>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const NS = 'http://www.w3.org/2000/svg';
+
+/* ------------------------------------------------------------ 1. 로드맵 */
+const DAYS = [
+  { n: 1, t: '시작하기', goal: '서버·화면·DB 가 각각 살아 있다', make: ['Hello 서버 (GET /)', 'Vite 첫 화면', 'categories · products 설계와 생성'], pkg: ['fastapi', 'uvicorn', 'vite (react)'], tables: ['categories', 'products'], concept: ['개발 과정', 'MVP', '브라우저-서버-DB'] },
+  { n: 2, t: '상품 목록', goal: 'DB 의 상품이 카드로 보인다', make: ['GET /products', '상품 카드 · 목록 화면', '이미지 공개(StaticFiles)', 'Vite 프록시'], pkg: ['pymysql', 'python-dotenv'], tables: [], concept: ['DB→API→화면', '.env', 'fetch · useEffect'] },
+  { n: 3, t: '상세 · 장바구니', goal: '카드 → 상세 → 장바구니', make: ['GET /products/{id}', '라우팅 · 레이아웃', '상세 화면', '장바구니(useCart)'], pkg: ['react-router-dom'], tables: ['product_images'], concept: ['404 / 422', 'Context', 'localStorage'] },
+  { n: 4, t: '주문 · 결제', goal: '구매하면 재고가 줄어든다', make: ['POST /orders (비회원)', '결제 · 완료 화면'], pkg: [], tables: ['orders', 'order_items'], concept: ['트랜잭션', '서버 계산', '롤백'] },
+  { n: 5, t: '동시성 · 발표', goal: '동시에 사도 재고가 안 깨진다', make: ['조건부 UPDATE + FOR UPDATE', 'race_test.py', 'MVP 발표'], pkg: [], tables: [], concept: ['경쟁 상태', '잠금', '상태 코드'] },
+  { n: 6, t: '회원', goal: '가입하고 로그인한다', make: ['이메일 인증 (Gmail)', '회원가입 · 로그인', 'AuthProvider'], pkg: [], tables: ['users', 'email_verifications'], concept: ['해시(scrypt)', 'JWT', 'Depends'] },
+  { n: 7, t: '회원 주문', goal: '내 구매내역이 보인다', make: ['주문에 회원·배송지 연결', '구매내역 API·화면', '배송지 저장', '우편번호 검색'], pkg: [], tables: ['addresses', 'orders ALTER'], concept: ['ALTER TABLE', 'JOIN · GROUP BY', '내 데이터만'] },
+  { n: 8, t: '검색 · 정렬', goal: '쇼핑몰다운 목록', make: ['/search/products', '카테고리 · 정렬 · 페이지', 'URL 로 상태 관리'], pkg: [], tables: [], concept: ['SQL 인젝션 방어', 'LIKE · LEFT JOIN', 'LIMIT/OFFSET'] },
+  { n: 9, t: '관리자', goal: '상품 관리 · 환불', make: ['require_admin', '상품 등록/수정/판매중지', '주문 관리 · 환불'], pkg: [], tables: [], concept: ['401 vs 403', '소프트 삭제', '환불 트랜잭션'] },
+  { n: 10, t: '이미지 · 마무리', goal: '이미지 업로드, 최종 발표', make: ['PUT /admin/products/{id}/images', '대표 3장 · 상세 10장', '(선택) 비밀번호 재설정'], pkg: ['python-multipart', 'pillow'], tables: [], concept: ['파일 업로드 보안', '썸네일', '파일 롤백'] },
+];
+let curDay = 1;
+function renderDays() {
+  $('#days').innerHTML = DAYS.map((d) => `<button type="button" class="day ${d.n <= 5 ? 'mvp' : 'ext'}" data-day="${d.n}" aria-pressed="${d.n === curDay}"><small>DAY</small><strong>${d.n}</strong><span>${esc(d.t)}</span></button>`).join('');
+  const d = DAYS[curDay - 1];
+  const cumTables = new Set(); const cumPkgs = [];
+  DAYS.slice(0, curDay).forEach((x) => { x.tables.forEach((t) => cumTables.add(t.replace(' ALTER', ''))); x.pkg.forEach((p) => cumPkgs.push(p)); });
+  const tcount = cumTables.size;
+  $('#day-detail').innerHTML = `
+    <div>
+      <p class="eyebrow">DAY ${d.n} · ${d.n <= 5 ? 'MVP' : '확장'}</p>
+      <h3>${esc(d.t)}</h3><p class="goal">${esc(d.goal)}</p>
+      <dl class="kv">
+        <dt>만드는 것</dt><dd>${d.make.map((m) => `<span>${esc(m)}</span>`).join(' · ')}</dd>
+        <dt>새로 설치</dt><dd>${d.pkg.length ? d.pkg.map((p) => `<span class="chip acc">${esc(p)}</span>`).join('') : '<span class="chip">없음</span>'}</dd>
+        <dt>새 테이블</dt><dd>${d.tables.length ? d.tables.map((t) => `<span class="chip ${t.includes('ALTER') ? 'new' : 'acc'}">${esc(t)}</span>`).join('') : '<span class="chip">없음</span>'}</dd>
+        <dt>핵심 개념</dt><dd>${d.concept.map((c) => `<span class="chip">${esc(c)}</span>`).join('')}</dd>
+      </dl>
+    </div>
+    <div class="mini-table">
+      <h4>여기까지 쌓인 것</h4>
+      <div class="growth">
+        <div class="row"><span>테이블 ${tcount} / 8</span><div class="bar"><i style="width:${tcount / 8 * 100}%"></i></div></div>
+        <div class="row"><span>설치한 패키지 ${cumPkgs.length}</span><div class="bar"><i style="width:${cumPkgs.length / 8 * 100}%"></i></div></div>
+        <div class="row"><span>일정 ${curDay} / 10일</span><div class="bar"><i style="width:${curDay * 10}%"></i></div></div>
+      </div>
+      <p style="margin-top:12px;font-size:.84rem;color:var(--muted)">패키지 : ${cumPkgs.length ? cumPkgs.map(esc).join(', ') : '-'}</p>
+    </div>`;
+}
+$('#days').addEventListener('click', (e) => { const b = e.target.closest('[data-day]'); if (b) { curDay = +b.dataset.day; renderDays(); } });
+renderDays();
+
+/* ------------------------------------------------------------ 2. ER */
+const ROW = 18, HEAD = 30;
+const TABLES = {
+  categories: { x: 20, y: 20, w: 210, day: 1, use: '상품을 묶는 분류(탄산, 주스, 물 ...). 상단 카테고리 버튼의 원본.', cols: [
+    ['id', 'INT', 'PK', 1, '카테고리 번호'], ['name', 'VARCHAR(30)', 'UK', 1, '카테고리 이름 (중복 불가)']] },
+  products: { x: 300, y: 20, w: 250, day: 1, use: '판매하는 상품. 프로젝트의 중심 테이블.', cols: [
+    ['id', 'INT', 'PK', 1, '상품 번호'], ['name', 'VARCHAR(50)', '', 1, '상품 이름'], ['price', 'INT', '', 1, '가격 (CHECK >= 0)'],
+    ['stock', 'INT', '', 1, '재고 (CHECK >= 0, 음수 방지 안전망)'], ['image_url', 'VARCHAR(255)', '', 1, '목록 카드 이미지 경로 (썸네일)'],
+    ['description', 'VARCHAR(255)', '', 1, '상품 설명'], ['is_active', 'TINYINT', '', 1, '판매 여부 (0 이면 판매중지)'],
+    ['is_recommended', 'TINYINT', '', 1, '추천 상품 여부'], ['recommend_rank', 'INT', '', 1, '추천 순서 (클수록 위)'],
+    ['created_at', 'DATETIME', '', 1, '등록 시각 (신규순 정렬)'], ['category_id', 'INT', 'FK', 1, '카테고리 (NULL 허용)']] },
+  product_images: { x: 650, y: 20, w: 250, day: 3, use: '상품 1개에 이미지 N개. 상세 화면의 갤러리와 상세 설명 이미지.', cols: [
+    ['id', 'INT', 'PK', 3, '이미지 번호'], ['product_id', 'INT', 'FK', 3, '어느 상품의 이미지인지'],
+    ['image_type', 'VARCHAR(10)', '', 3, 'GALLERY(대표·썸네일) / DETAIL(상세 설명)'], ['image_url', 'VARCHAR(255)', '', 3, '이미지 경로'],
+    ['sort_order', 'INT', '', 3, '보여 줄 순서 (1 = 대표)']] },
+  order_items: { x: 650, y: 215, w: 250, day: 4, use: '주문 안의 상품 한 줄 한 줄. 주문과 상품의 다대다를 풀어낸 연결 표.', cols: [
+    ['id', 'INT', 'PK', 4, '행 번호'], ['order_id', 'INT', 'FK', 4, '어느 주문인지'], ['product_id', 'INT', 'FK', 4, '어떤 상품인지'],
+    ['quantity', 'INT', '', 4, '수량 (CHECK > 0)'], ['unit_price', 'INT', '', 4, '주문 당시 단가 (가격이 바뀌어도 그대로)']] },
+  orders: { x: 300, y: 340, w: 270, day: 4, use: '주문 1건의 머리말(합계, 상태, 시각, 배송지).', cols: [
+    ['id', 'INT', 'PK', 4, '주문 번호'], ['user_id', 'INT', 'FK', 7, '구매한 회원 (7일차에 추가)'], ['total_price', 'INT', '', 4, '주문 합계 (서버가 계산)'],
+    ['status', 'VARCHAR(10)', '', 4, 'PENDING / PAID / REFUNDED / CANCELLED'], ['created_at', 'DATETIME', '', 4, '주문 생성 시각'],
+    ['paid_at', 'DATETIME', '', 4, '결제(구매) 시각, 구매내역 기간 기준'], ['refunded_at', 'DATETIME', '', 4, '환불 시각'],
+    ['receiver_name', 'VARCHAR(50)', '', 7, '받는 사람 (주문 시점 값 복사)'], ['receiver_phone', 'VARCHAR(20)', '', 7, '연락처'],
+    ['zipcode', 'CHAR(5)', '', 7, '우편번호'], ['address', 'VARCHAR(255)', '', 7, '주소'], ['address_detail', 'VARCHAR(100)', '', 7, '상세주소'],
+    ['request_memo', 'VARCHAR(100)', '', 7, '배송 요청사항']] },
+  users: { x: 20, y: 340, w: 230, day: 6, use: '가입한 회원. 로그인과 권한(일반/관리자)의 원본.', cols: [
+    ['id', 'INT', 'PK', 6, '회원 번호'], ['email', 'VARCHAR(100)', 'UK', 6, '로그인 아이디 (중복 가입 방지)'],
+    ['password_hash', 'VARCHAR(255)', '', 6, 'scrypt 해시. 원문은 저장하지 않는다'], ['name', 'VARCHAR(50)', '', 6, '이름'],
+    ['role', 'VARCHAR(10)', '', 6, 'USER / ADMIN'], ['status', 'VARCHAR(10)', '', 6, 'ACTIVE / BLOCKED'], ['created_at', 'DATETIME', '', 6, '가입 시각']] },
+  addresses: { x: 20, y: 540, w: 230, day: 7, use: '회원이 주문 때 입력한 배송지를 저장해 두고 다음에 불러 쓴다. 회원 1 : 배송지 N.', cols: [
+    ['id', 'INT', 'PK', 7, ''], ['user_id', 'INT', 'FK', 7, '배송지 주인'], ['receiver_name', 'VARCHAR(50)', '', 7, '받는 사람'],
+    ['receiver_phone', 'VARCHAR(20)', '', 7, '연락처'], ['zipcode', 'CHAR(5)', '', 7, '우편번호'], ['address', 'VARCHAR(255)', '', 7, '주소'],
+    ['address_detail', 'VARCHAR(100)', '', 7, '상세주소'], ['is_default', 'TINYINT', '', 7, '기본 배송지 (회원당 1개)'], ['created_at', 'DATETIME', '', 7, '저장 시각']] },
+  email_verifications: { x: 650, y: 440, w: 250, day: 6, use: '가입 전 이메일 확인용 6자리 코드를 임시 보관. 가입 전이라 users 와 FK 없이 이메일 글자로만 연결.', cols: [
+    ['id', 'INT', 'PK', 6, ''], ['email', 'VARCHAR(100)', '', 6, '인증받는 이메일'], ['purpose', 'VARCHAR(10)', '', 6, 'SIGNUP / RESET'],
+    ['code_hash', 'CHAR(64)', '', 6, '코드의 해시 (원문 저장 안 함)'], ['attempts', 'INT', '', 6, '틀린 횟수 (5회까지)'], ['expires_at', 'DATETIME', '', 6, '만료 시각'],
+    ['verified_at', 'DATETIME', '', 6, '인증 성공 시각'], ['created_at', 'DATETIME', '', 6, '발송 시각 (60초 재발송 제한)']] },
+};
+const RELS = [
+  { a: 'categories', b: 'products', ca: '1', cb: 'N', day: 1, text: '카테고리 1 : 상품 N' },
+  { a: 'products', b: 'product_images', ca: '1', cb: 'N', day: 3, text: '상품 1 : 이미지 N' },
+  { a: 'orders', b: 'order_items', ca: '1', cb: 'N', day: 4, text: '주문 1 : 주문상품 N' },
+  { a: 'products', b: 'order_items', ca: '1', cb: 'N', day: 4, text: '상품 1 : 주문상품 N' },
+  { a: 'users', b: 'orders', ca: '1', cb: 'N', day: 7, text: '회원 1 : 주문 N (7일차 FK 추가)' },
+  { a: 'users', b: 'addresses', ca: '1', cb: 'N', day: 7, text: '회원 1 : 배송지 N' },
+];
+let erDay = 1, erSel = 'products';
+const vis = (t) => (erDay >= t.day ? t.cols.filter((c) => erDay >= c[3]) : t.cols);
+const tH = (t) => HEAD + vis(t).length * ROW + 6;
+function anchor(t, side, frac = 0.5) {
+  const h = tH(t);
+  if (side === 'r') return [t.x + t.w, t.y + h * frac];
+  if (side === 'l') return [t.x, t.y + h * frac];
+  if (side === 'b') return [t.x + t.w * frac, t.y + h];
+  return [t.x + t.w * frac, t.y];
+}
+const PATHS = {
+  'categories-products': () => [anchor(TABLES.categories, 'r', .5), anchor(TABLES.products, 'l', .09)],
+  'products-product_images': () => [anchor(TABLES.products, 'r', .12), anchor(TABLES.product_images, 'l', .3)],
+  'orders-order_items': () => [anchor(TABLES.orders, 'r', .22), anchor(TABLES.order_items, 'l', .75)],
+  'products-order_items': () => [anchor(TABLES.products, 'r', .55), anchor(TABLES.order_items, 'l', .22)],
+  'users-orders': () => [anchor(TABLES.users, 'r', .3), anchor(TABLES.orders, 'l', .1)],
+  'users-addresses': () => [anchor(TABLES.users, 'b', .5), anchor(TABLES.addresses, 't', .5)],
+};
+function renderER() {
+  const svg = $('#er'); let out = '';
+  RELS.forEach((r) => {
+    const [p1, p2] = PATHS[`${r.a}-${r.b}`]();
+    const on = erDay >= r.day;
+    const hl = erSel === r.a || erSel === r.b;
+    const mx = (p1[0] + p2[0]) / 2;
+    const d = Math.abs(p1[0] - p2[0]) < 4 ? `M${p1[0]},${p1[1]} L${p2[0]},${p2[1]}` : `M${p1[0]},${p1[1]} C${mx},${p1[1]} ${mx},${p2[1]} ${p2[0]},${p2[1]}`;
+    out += `<path class="rel ${on ? '' : 'off'} ${hl && on ? 'hl' : ''}" d="${d}"/>`;
+    const side1 = p1[0] <= p2[0] ? 10 : -10;
+    out += `<text class="card" x="${p1[0] + (Math.abs(p1[0] - p2[0]) < 4 ? 8 : side1)}" y="${p1[1] - 5}" text-anchor="middle" opacity="${on ? 1 : .15}">${r.ca}</text>`;
+    out += `<text class="card" x="${p2[0] + (Math.abs(p1[0] - p2[0]) < 4 ? 8 : -side1)}" y="${p2[1] - 5}" text-anchor="middle" opacity="${on ? 1 : .15}">${r.cb}</text>`;
+  });
+  Object.entries(TABLES).forEach(([name, t]) => {
+    const exists = erDay >= t.day;
+    const h = tH(t);
+    let g = `<g class="tbl ${exists ? '' : 'off'} ${erSel === name ? 'sel' : ''}" data-t="${name}" tabindex="0" role="button" aria-label="${name} 표 ${exists ? '' : '(아직 없음)'}">`;
+    g += `<rect class="t-box" x="${t.x}" y="${t.y}" width="${t.w}" height="${h}" rx="7"/>`;
+    g += `<path class="t-head" d="M${t.x},${t.y + 24} V${t.y + 7} a7,7 0 0 1 7,-7 H${t.x + t.w - 7} a7,7 0 0 1 7,7 V${t.y + 24} Z"/>`;
+    g += `<text class="t-name" x="${t.x + 10}" y="${t.y + 16}">${name}</text><text class="t-day" x="${t.x + t.w - 10}" y="${t.y + 16}" text-anchor="end">${t.day}일차</text>`;
+    let yy = t.y + HEAD;
+    vis(t).forEach((c) => {
+      {
+        const isNew = c[3] > t.day && erDay >= 7 && name === 'orders';
+        g += `<g class="${isNew ? 'c-new' : ''}">${isNew ? `<rect x="${t.x + 2}" y="${yy - 12}" width="${t.w - 4}" height="${ROW}"/>` : ''}`;
+        g += `<text class="c-name" x="${t.x + 10}" y="${yy}">${c[0]}</text>`;
+        g += `<text class="c-type" x="${t.x + t.w - (c[2] ? 40 : 10)}" y="${yy}" text-anchor="end">${c[1]}</text>`;
+        if (c[2]) g += `<text class="c-key" x="${t.x + t.w - 10}" y="${yy}" text-anchor="end">${c[2]}</text>`;
+        g += '</g>';
+        yy += ROW;
+      }
+    });
+    g += '</g>';
+    out += g;
+  });
+  svg.innerHTML = out;
+  renderERDetail();
+}
+function renderERDetail() {
+  const t = TABLES[erSel]; const exists = erDay >= t.day;
+  const rels = RELS.filter((r) => r.a === erSel || r.b === erSel);
+  const ordersNote = erSel === 'orders' ? `<div class="er-note"><b>4일차 → 7일차</b> : <code>ALTER TABLE</code> 로 <code>user_id</code> 와 배송지 컬럼 6개를 추가합니다. 기능이 자라면 표도 고쳐 나가는 것이 실무의 모습입니다. ${erDay >= 7 ? '지금 보이는 노란 줄이 7일차에 추가된 컬럼입니다.' : '일차를 7로 바꿔 보세요.'}</div>` : '';
+  $('#er-detail').innerHTML = `
+    <h3>${erSel}</h3>
+    <p class="use">${esc(t.use)}</p>
+    ${exists ? '' : `<p class="chip new" style="margin-bottom:10px">${t.day}일차에 만들어집니다</p>`}
+    <table>${t.cols.map((c) => `<tr><td>${c[0]}${c[2] ? ` <span class="chip acc">${c[2]}</span>` : ''}</td><td>${esc(c[4] || '-')}${c[3] > t.day ? ` <span class="chip new">${c[3]}일차 추가</span>` : ''}</td></tr>`).join('')}</table>
+    <ul class="rels">${rels.map((r) => `<li><span class="chip">${erDay >= r.day ? 'FK' : `${r.day}일차`}</span> ${esc(r.text)}</li>`).join('')}</ul>
+    ${ordersNote}`;
+}
+$('#er-days').innerHTML = [1, 3, 4, 6, 7, 8].map((d) => `<button type="button" data-d="${d}" aria-pressed="${d === erDay}">${d}일차</button>`).join('');
+$('#er-days').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-d]'); if (!b) return; erDay = +b.dataset.d;
+  $('#er-days').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(+x.dataset.d === erDay)));
+  renderER();
+});
+$('#er').addEventListener('click', (e) => { const g = e.target.closest('[data-t]'); if (g) { erSel = g.dataset.t; renderER(); } });
+$('#er').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { const g = e.target.closest('[data-t]'); if (g) { e.preventDefault(); erSel = g.dataset.t; renderER(); } } });
+renderER();
+
+/* ------------------------------------------------------------ 3. 요청 흐름 */
+const NODES = [
+  { name: '브라우저', sub: 'React :5173', x: 20 }, { name: 'Vite 프록시', sub: ':5173', x: 265 },
+  { name: 'FastAPI', sub: 'uvicorn :8000', x: 510 }, { name: 'MariaDB', sub: 'test_vmshop', x: 755 },
+];
+const NW = 145, NY = 60, NH = 74;
+const SCEN = {
+  list: { label: '상품 목록 보기', steps: [
+    { f: 0, t: 0, who: 'React · ProductList.jsx', txt: '화면이 처음 나타나면 useEffect 가 서버에 상품을 요청합니다.', code: "fetchProducts()\n  → fetch('/products')" , lbl: 'GET /products' },
+    { f: 0, t: 1, who: 'Vite 프록시', txt: '브라우저는 5173 하고만 통신합니다. /products 로 시작하는 요청이라 Vite 가 서버로 대신 전달합니다. (CORS 가 필요 없다)', code: "vite.config.js\nproxy: { '/products': 'http://localhost:8000' }", lbl: '전달' },
+    { f: 1, t: 2, who: 'FastAPI · product.py', txt: '주소 /products 에 연결된 함수가 실행됩니다. SQL 을 담당하는 함수를 부릅니다.', code: '@router.get("/products")\ndef list_products():\n    products = find_all_products()', lbl: '함수 실행' },
+    { f: 2, t: 3, who: 'MariaDB', txt: '판매중지(is_active=0) 상품은 제외하고 가격 순으로 꺼냅니다.', code: 'SELECT id, name, price, stock, image_url\nFROM products\nWHERE is_active = 1\nORDER BY price', lbl: 'SQL' },
+    { f: 3, t: 0, ret: true, who: '응답이 거꾸로', txt: 'DB 가 행 33개를 주면 서버가 딕셔너리 리스트를 JSON 으로 바꿔 돌려주고, 프록시를 거쳐 브라우저에 도착합니다.', code: '[{"id":12,"name":"생수 500ml","price":1000,...}, ...]', lbl: 'JSON 200' },
+    { f: 0, t: 0, who: 'React', txt: 'setProducts 로 state 가 바뀌면 화면이 다시 그려져 카드 33개가 나타납니다.', code: 'setProducts(list.map(...))\n→ products.map(p => <ProductCard .../>)', lbl: '카드 그리기' },
+  ] },
+  buy: { label: '구매하기 (회원)', steps: [
+    { f: 0, t: 0, who: 'React · CheckoutPage.jsx', txt: '결제하기를 누르면 상품 번호와 수량, 배송지를 보냅니다. 가격은 보내지 않습니다. 로그인 토큰이 헤더에 붙습니다.', code: "createOrder(items, shipping)\nPOST /orders\nAuthorization: Bearer <토큰>", lbl: 'POST /orders' },
+    { f: 0, t: 1, who: 'Vite 프록시', txt: '/orders 요청을 FastAPI 로 전달합니다.', code: "'/orders': 'http://localhost:8000'", lbl: '전달' },
+    { f: 1, t: 2, who: 'FastAPI · auth.py', txt: '함수가 실행되기 전에 Depends(get_current_user) 가 토큰의 서명과 만료를 확인합니다. 로그인한 회원이 아니면 여기서 401 로 끝납니다.', code: 'def create_order(body, user=Depends(get_current_user)):', lbl: '토큰 확인' },
+    { f: 2, t: 3, who: 'MariaDB · 재고 차감', txt: '상품 행을 잠그고 읽은 뒤, 재고 확인과 차감을 한 문장으로 합니다. 바뀐 행이 0 이면 재고 부족(409)입니다.', code: 'SELECT ... FROM products WHERE id=%s FOR UPDATE\nUPDATE products SET stock = stock - %s\n WHERE id = %s AND stock >= %s', lbl: '잠금 + 차감' },
+    { f: 2, t: 3, who: 'MariaDB · 저장', txt: '주문과 주문 상품, 배송지를 같은 트랜잭션으로 저장하고 commit 합니다. 중간에 실패하면 재고 차감까지 전부 rollback 됩니다.', code: 'INSERT INTO orders (user_id, total_price, status, ...)\nINSERT INTO order_items (...)\nCOMMIT', lbl: 'INSERT · COMMIT' },
+    { f: 3, t: 0, ret: true, who: '응답이 거꾸로', txt: '201 과 주문 번호가 돌아오면 화면은 장바구니에서 구매한 상품을 빼고 주문 완료 화면으로 이동합니다.', code: '201 {"order_id": 51, "status": "PAID", "total_price": 4000}', lbl: '201 Created' },
+  ] },
+  login: { label: '로그인', steps: [
+    { f: 0, t: 0, who: 'React · LoginPage.jsx', txt: '이메일과 비밀번호를 보냅니다. form 의 기본 동작(새로고침)은 preventDefault 로 막습니다.', code: "loginRequest(email, password)\nPOST /auth/login", lbl: 'POST /auth/login' },
+    { f: 0, t: 1, who: 'Vite 프록시', txt: '/auth 요청을 전달합니다.', code: "'/auth': 'http://localhost:8000'", lbl: '전달' },
+    { f: 1, t: 2, who: 'FastAPI · auth.py', txt: '이메일로 회원을 찾아 비밀번호 해시를 가져옵니다. 없는 이메일이어도 같은 시간이 걸리도록 가짜 해시로 한 번 계산합니다.', code: 'SELECT id, email, name, role, status, password_hash\nFROM users WHERE email = %s', lbl: '회원 조회' },
+    { f: 2, t: 3, who: 'MariaDB', txt: '저장된 값은 scrypt$...$salt$해시 모양입니다. 서버는 입력한 비밀번호를 같은 salt 로 계산해 비교합니다.', code: 'scrypt$16384$8$1$<salt>$<해시>', lbl: '해시 비교' },
+    { f: 2, t: 2, who: 'FastAPI', txt: '맞으면 회원 id, 권한, 만료 시각을 담고 비밀키로 서명한 토큰을 만듭니다. 틀리면 이유를 알려 주지 않고 401 입니다.', code: 'create_token(user_id, role)\n= 헤더.내용.서명', lbl: '토큰 생성' },
+    { f: 3, t: 0, ret: true, who: 'React', txt: '토큰을 localStorage 에 저장하고 user 상태를 채웁니다. 새로고침해도 저장된 토큰으로 /auth/me 를 불러 로그인을 유지합니다.', code: "setToken(data.access_token)\nsetUser(data.user)", lbl: '토큰 + 회원 정보' },
+  ] },
+};
+let scen = 'list', step = 0;
+function renderFlow() {
+  const s = SCEN[scen]; const cur = s.steps[step];
+  const on = new Set([cur.f, cur.t]);
+  let svg = ''; let labels = '';
+  s.steps.slice(0, step + 1).forEach((st, i) => {
+    if (st.f === st.t) return;
+    const isCur = i === step;
+    const a = NODES[st.f], b = NODES[st.t];
+    const goingRight = b.x > a.x;
+    const yy = st.ret ? NY + NH + 36 : NY + NH / 2 + (st.f < st.t ? -14 : 14);
+    const x1 = goingRight ? a.x + NW : a.x, x2 = goingRight ? b.x : b.x + NW;
+    const midY = st.ret ? yy : yy;
+    const path = st.ret ? `M${a.x + NW / 2},${NY + NH} V${midY} H${b.x + NW / 2} V${NY + NH + 2}` : `M${x1},${yy} H${x2}`;
+    svg += `<path class="arrow ${isCur ? '' : 'old'} ${st.ret ? 'ret' : ''}" d="${path}"/>`;
+    const tip = st.ret ? `${b.x + NW / 2},${NY + NH + 2} ${b.x + NW / 2 - 6},${NY + NH + 14} ${b.x + NW / 2 + 6},${NY + NH + 14}` : (goingRight ? `${x2},${yy} ${x2 - 11},${yy - 6} ${x2 - 11},${yy + 6}` : `${x2},${yy} ${x2 + 11},${yy - 6} ${x2 + 11},${yy + 6}`);
+    svg += `<polygon class="tip ${isCur ? '' : 'old'}" points="${tip}"/>`;
+    if (isCur) labels += `<text class="lbl" x="${st.ret ? (a.x + b.x + NW) / 2 : (x1 + x2) / 2}" y="${st.ret ? yy + 18 : yy - 8}">${esc(st.lbl)}</text>`;
+  });
+  NODES.forEach((n, i) => {
+    svg += `<g class="node ${on.has(i) ? 'on' : ''}"><rect x="${n.x}" y="${NY}" width="${NW}" height="${NH}" rx="9"/><text x="${n.x + NW / 2}" y="${NY + 32}">${n.name}</text><text class="sub" x="${n.x + NW / 2}" y="${NY + 52}">${n.sub}</text></g>`;
+  });
+  if (cur.f === cur.t) labels += `<text class="lbl" x="${NODES[cur.f].x + NW / 2}" y="${NY - 12}">${esc(cur.lbl)}</text>`;
+  svg += labels;
+  $('#flow-svg').innerHTML = svg;
+  $('#step-card').innerHTML = `<div class="step-no">${step + 1}<span style="font-size:.8rem;color:var(--muted)"> / ${s.steps.length}</span></div><div class="who">${esc(cur.who)}</div><p>${esc(cur.txt)}</p><pre>${esc(cur.code)}</pre>`;
+  $('#step-prev').disabled = step === 0; $('#step-next').disabled = step === s.steps.length - 1;
+}
+$('#flow-tabs').innerHTML = Object.entries(SCEN).map(([k, v]) => `<button type="button" data-s="${k}" aria-pressed="${k === scen}">${v.label}</button>`).join('');
+$('#flow-tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (!b) return; scen = b.dataset.s; step = 0; $('#flow-tabs').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.s === scen))); renderFlow(); });
+$('#step-next').addEventListener('click', () => { if (step < SCEN[scen].steps.length - 1) { step++; renderFlow(); } });
+$('#step-prev').addEventListener('click', () => { if (step > 0) { step--; renderFlow(); } });
+renderFlow();
+
+/* ------------------------------------------------------------ 4. 동시 주문 */
+let raceMode = 'naive', raceTimer = null;
+const rs = $('#race-stock'), ru = $('#race-users');
+rs.addEventListener('input', () => { $('#race-stock-v').textContent = rs.value; resetRace(); });
+ru.addEventListener('input', () => { $('#race-users-v').textContent = ru.value; resetRace(); });
+$('#race-check').addEventListener('change', resetRace);
+$('#race-mode').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-mode]'); if (!b) return; raceMode = b.dataset.mode;
+  $('#race-mode').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.mode === raceMode)));
+  renderRaceCode(); resetRace();
+});
+function renderRaceCode() {
+  $('#race-code').innerHTML = raceMode === 'naive'
+    ? `<span class="hl"># ① 확인</span>\np = find_product_by_id(pid)\nif p["stock"] &lt; qty:\n    raise HTTPException(409, "재고가 부족합니다.")\n<span class="hl"># ② (이 틈에 다른 주문이 끼어든다)</span>\n<span class="hl"># ③ 차감</span>\nUPDATE products SET stock = stock - qty WHERE id = pid`
+    : `<span class="hl"># ① 상품 행을 잠그고 읽는다 : 같은 상품 주문은 한 줄로 선다</span>\nSELECT id, name, price FROM products WHERE id = pid <span class="hl">FOR UPDATE</span>\n<span class="hl"># ② 확인과 차감을 한 문장으로</span>\nUPDATE products SET stock = stock - qty\n WHERE id = pid <span class="hl">AND stock &gt;= qty</span>\nif cur.rowcount == 0:  raise HTTPException(409, "재고가 부족합니다.")`;
+}
+function simulate(stock, n, check, mode) {
+  // 이벤트 시뮬레이션 : 주문자는 0~170ms 사이에 도착하고, 읽은 뒤 50ms 뒤에 차감한다 (실험용 time.sleep(0.05) 과 같다)
+  let seed = 7 + n * 13 + stock; const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const users = Array.from({ length: n }, (_, i) => ({ i, t: rnd() * 170, res: null }));
+  if (mode === 'safe') {
+    users.sort((a, b) => a.t - b.t); let s = stock; const order = [];
+    users.forEach((u) => { if (s >= 1) { s--; u.res = 'ok'; } else u.res = 'no'; order.push(u); });
+    return { order, stock: s, sold: stock - s };
+  }
+  const ev = [];
+  users.forEach((u) => { ev.push({ t: u.t, k: 'r', u }); ev.push({ t: u.t + 50, k: 'w', u }); });
+  ev.sort((a, b) => a.t - b.t || (a.k === 'w' ? -1 : 1));
+  let s = stock, sold = 0; const order = [];
+  ev.forEach((e) => {
+    if (e.k === 'r') { e.u.pass = s >= 1; if (!e.u.pass) { e.u.res = 'no'; order.push(e.u); } }
+    else if (e.u.pass) {
+      if (check && s - 1 < 0) e.u.res = 'err'; else { s--; sold++; e.u.res = 'ok'; }
+      order.push(e.u);
+    }
+  });
+  return { order, stock: s, sold };
+}
+function resetRace() {
+  clearInterval(raceTimer); const st = +rs.value, n = +ru.value;
+  $('#stock-now').textContent = st; $('#stock-big').classList.remove('neg');
+  $('#dots').innerHTML = Array.from({ length: n }, (_, i) => `<span class="dot">${i + 1}</span>`).join('');
+  $('#race-res').innerHTML = ''; $('#race-verdict').className = 'verdict mid'; $('#race-verdict').textContent = '실행을 누르면 결과가 나옵니다.';
+  $('#race-run').disabled = false;
+}
+$('#race-run').addEventListener('click', () => {
+  const st = +rs.value, n = +ru.value, check = $('#race-check').checked;
+  resetRace(); $('#race-run').disabled = true;
+  const r = simulate(st, n, check, raceMode);
+  const dots = [...$('#dots').children]; let live = st, okCount = 0, idx = 0;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const apply = (u) => {
+    const d = dots[u.i];
+    if (u.res === 'ok') { okCount++; live--; d.className = 'dot ' + (okCount > st ? 'over' : 'ok'); }
+    else d.className = 'dot ' + u.res;
+    $('#stock-now').textContent = live; $('#stock-big').classList.toggle('neg', live < 0);
+  };
+  const finish = () => {
+    const c = (k) => r.order.filter((u) => u.res === k).length;
+    const over = Math.max(0, r.sold - st);
+    $('#race-res').innerHTML = `<dt>주문 성공 (201)</dt><dd>${c('ok')}건</dd><dt>재고 부족 (409)</dt><dd>${c('no')}건</dd><dt>서버 오류 (500)</dt><dd>${c('err')}건</dd><dt>실제로 팔린 수량</dt><dd>${r.sold}개 / 재고 ${st}</dd><dt>최종 재고</dt><dd>${r.stock}개</dd>`;
+    const v = $('#race-verdict');
+    if (over > 0) { v.className = 'verdict bad'; v.innerHTML = `<b>초과 판매</b> : 재고는 ${st}개인데 ${r.sold}개를 팔았습니다. 확인한 시점과 차감하는 시점 사이에 틈이 있었고, DB 안전망(CHECK)도 없었습니다.`; }
+    else if (c('err') > 0) { v.className = 'verdict mid'; v.innerHTML = `<b>음수는 막혔지만 오류 화면</b> : DB 안전망이 재고 음수를 막았습니다. 그러나 사용자 ${c('err')}명은 "재고 부족" 대신 <b>서버 오류(500)</b> 를 봅니다.`; }
+    else { v.className = 'verdict good'; v.innerHTML = `<b>정상</b> : 성공 ${c('ok')}건은 재고와 같고, 나머지는 모두 "재고 부족(409)" 으로 정확히 안내됩니다.`; }
+  };
+  if (reduce) { r.order.forEach(apply); finish(); $('#race-run').disabled = false; return; }
+  raceTimer = setInterval(() => {
+    if (idx >= r.order.length) { clearInterval(raceTimer); finish(); $('#race-run').disabled = false; return; }
+    apply(r.order[idx++]);
+  }, 110);
+});
+renderRaceCode(); resetRace();
+
+/* ------------------------------------------------------------ 5. JWT */
+const SECRET = 'demo-secret';
+const enc = new TextEncoder();
+const b64u = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64uStr = (s) => b64u(enc.encode(s));
+const unb64uStr = (t) => { try { const p = t.replace(/-/g, '+').replace(/_/g, '/'); return new TextDecoder().decode(Uint8Array.from(atob(p + '='.repeat((4 - p.length % 4) % 4)), (c) => c.charCodeAt(0))); } catch { return '(읽을 수 없음)'; } };
+async function sign(data) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return b64u(await crypto.subtle.sign('HMAC', key, enc.encode(data)));
+}
+const HEADER = { alg: 'HS256', typ: 'JWT' };
+const PAYLOAD0 = { sub: '2', role: 'USER', exp: 1794500000 };
+let tok = { h: '', p: '', s: '' }, original = null, serverVerifies = null;
+function showTok(label) {
+  $('#jwt-parts').innerHTML = `<span class="p1">${esc(tok.h)}</span><span class="dotc">.</span><span class="p2">${esc(tok.p)}</span><span class="dotc">.</span><span class="p3">${esc(tok.s)}</span>`;
+  $('#jwt-h').textContent = unb64uStr(tok.h);
+  $('#jwt-p').textContent = unb64uStr(tok.p).replace(/,/g, ',\n');
+  $('#jwt-s').textContent = 'HMAC-SHA256(\n  헤더 + "." + 내용,\n  비밀키)\n= ' + tok.s.slice(0, 18) + '...';
+}
+async function verify() {
+  const expect = await sign(tok.h + '.' + tok.p);
+  const out = $('#jwt-out');
+  if (expect === tok.s) { out.className = 'jwt-out good'; out.innerHTML = '<b>서버의 판단 : 통과.</b> 서명이 내용과 맞습니다. 서버가 만든 토큰이거나, 비밀키를 아는 쪽이 서명했다는 뜻입니다. 내용에 있는 권한(role)을 믿고 요청을 처리합니다.'; }
+  else { out.className = 'jwt-out bad'; out.innerHTML = '<b>서버의 판단 : 거부 (401).</b> 헤더와 내용으로 다시 계산한 서명이 토큰에 붙은 서명과 다릅니다. 내용이 바뀌었으니 믿을 수 없습니다. 비밀키가 없으면 맞는 서명을 만들 수 없습니다.'; }
+}
+async function initTok() {
+  try {
+    const h = b64uStr(JSON.stringify(HEADER)), p = b64uStr(JSON.stringify(PAYLOAD0));
+    tok = { h, p, s: await sign(h + '.' + p) }; original = { ...tok };
+    showTok(); await verify();
+  } catch {
+    $('#jwt-out').className = 'jwt-out bad'; $('#jwt-out').textContent = '이 환경에서는 브라우저 암호 기능(WebCrypto)을 쓸 수 없어 시연을 건너뜁니다.';
+    ['jwt-forge', 'jwt-resign', 'jwt-reset'].forEach((id) => { $('#' + id).disabled = true; });
+  }
+}
+$('#jwt-forge').addEventListener('click', async () => {
+  const payload = JSON.parse(unb64uStr(tok.p)); payload.role = 'ADMIN';
+  tok = { ...tok, p: b64uStr(JSON.stringify(payload)) }; showTok(); await verify();
+});
+$('#jwt-resign').addEventListener('click', async () => { tok.s = await sign(tok.h + '.' + tok.p); showTok(); await verify(); });
+$('#jwt-reset').addEventListener('click', async () => { tok = { ...original }; showTok(); await verify(); });
+initTok();
+
+/* ------------------------------------------------------------ 6. API */
+const APIS = [
+  ['GET', '/', '서버 동작 확인', '누구나', 1], ['GET', '/products', '상품 목록 (판매중, 가격순)', '누구나', 2],
+  ['GET', '/products/{id}', '상품 상세 + 이미지', '누구나', 3], ['POST', '/orders', '주문(구매) · 4일차는 비회원, 7일차부터 로그인', '로그인', 4],
+  ['POST', '/auth/email/send', '인증 코드 메일 발송', '누구나', 6], ['POST', '/auth/email/verify', '인증 코드 확인', '누구나', 6],
+  ['POST', '/auth/signup', '회원가입', '누구나', 6], ['POST', '/auth/login', '로그인 (토큰 발급)', '누구나', 6], ['GET', '/auth/me', '내 정보', '로그인', 6],
+  ['GET', '/orders', '내 주문 목록', '로그인', 7], ['GET', '/orders/{id}', '내 주문 상세 (남의 주문은 404)', '로그인', 7],
+  ['GET', '/purchases', '구매내역 (PAID, 기간)', '로그인', 7], ['GET', '/addresses', '내 배송지 목록', '로그인', 7],
+  ['PUT', '/addresses/{id}/default', '기본 배송지 지정', '로그인', 7], ['DELETE', '/addresses/{id}', '배송지 삭제', '로그인', 7],
+  ['GET', '/search/products', '검색 · 정렬 · 페이지', '누구나', 8], ['GET', '/search/categories', '카테고리 목록', '누구나', 8], ['GET', '/search/sort-options', '정렬 옵션 목록', '누구나', 8],
+  ['POST', '/products', '상품 등록', '관리자', 9], ['PUT', '/products/{id}', '상품 수정', '관리자', 9], ['DELETE', '/products/{id}', '상품 판매중지', '관리자', 9],
+  ['GET', '/admin/products', '관리자 상품 목록 (판매중지 포함)', '관리자', 9], ['GET', '/admin/products/{id}', '관리자 상품 상세', '관리자', 9],
+  ['GET', '/admin/orders', '전체 주문 목록', '관리자', 9], ['GET', '/admin/orders/{id}', '주문 상세', '관리자', 9], ['POST', '/admin/orders/{id}/refund', '환불 (재고 복구)', '관리자', 9],
+  ['PUT', '/admin/products/{id}/images', '상품 이미지 저장 (multipart)', '관리자', 10],
+  ['POST', '/auth/password/send', '비밀번호 재설정 코드 (선택)', '누구나', 10], ['POST', '/auth/password/reset', '비밀번호 재설정 (선택)', '누구나', 10],
+];
+let apiDay = 10;
+function renderAPI() {
+  $('#api-body').innerHTML = APIS.map((a) => `<tr class="${a[4] > apiDay ? 'later' : ''}"><td><span class="m ${a[0]}">${a[0]}</span></td><td><code>${esc(a[1])}</code></td><td>${esc(a[2])}</td><td>${a[3] === '누구나' ? '<span class="chip">누구나</span>' : a[3] === '로그인' ? '<span class="chip acc">로그인</span>' : '<span class="chip new">관리자</span>'}</td><td class="mono">${a[4]}</td></tr>`).join('');
+}
+$('#api-days').innerHTML = [2, 3, 4, 6, 7, 8, 9, 10].map((d) => `<button type="button" data-d="${d}" aria-pressed="${d === apiDay}">${d}일차</button>`).join('');
+$('#api-days').addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (!b) return; apiDay = +b.dataset.d; $('#api-days').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(+x.dataset.d === apiDay))); renderAPI(); });
+renderAPI();
+</script>
+
+</body>
+</html>
